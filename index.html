@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema Escolar Completo</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #1a73e8; border-bottom: 2px solid #e8f0fe; padding-bottom: 10px; margin-top: 0; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; flex: 1; }
+        button { padding: 10px 15px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.2s; }
+        .btn-add { background: #28a745; color: white; }
+        .btn-action { background: #007bff; color: white; font-size: 12px; }
+        .btn-del { background: #dc3545; color: white; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { border-bottom: 1px solid #eee; padding: 12px; text-align: left; }
+        th { background: #f8f9fa; }
+        .status-ativa { color: #28a745; font-weight: bold; }
+        .status-concluida { color: #007bff; font-weight: bold; }
+        .status-cancelada { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>🏫 Sistema de Gestão Acadêmica</h1>
+
+    <div class="grid">
+        <div class="card">
+            <h2>👨‍🎓 Alunos</h2>
+            <div class="form-group">
+                <input type="text" id="nomeAluno" placeholder="Nome">
+                <input type="email" id="emailAluno" placeholder="Email">
+                <button class="btn-add" onclick="criarAluno()">+</button>
+            </div>
+            <table id="tabelaAlunos">
+                <thead><tr><th>Nome</th><th>Ações</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>📚 Cursos</h2>
+            <div class="form-group">
+                <input type="text" id="nomeCurso" placeholder="Título do Curso">
+                <input type="number" id="cargaHoraria" placeholder="Horas">
+                <button class="btn-add" onclick="criarCurso()">+</button>
+            </div>
+            <table id="tabelaCursos">
+                <thead><tr><th>Curso</th><th>Ações</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📝 Gerenciar Matrículas</h2>
+        <div class="form-group">
+            <select id="selectAlunos"><option>Carregando alunos...</option></select>
+            <select id="selectCursos"><option>Carregando cursos...</option></select>
+            <button class="btn-add" onclick="matricular()">Efetivar Matrícula</button>
+        </div>
+        <table id="tabelaMatriculas">
+            <thead>
+                <tr><th>Aluno</th><th>Curso</th><th>Status</th><th>Ações</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API = 'http://localhost:3000';
+
+        // --- FUNÇÕES DE CARREGAMENTO ---
+        async function atualizarTudo() {
+            await Promise.all([listarAlunos(), listarCursos(), listarMatriculas()]);
+        }
+
+        async function listarAlunos() {
+            const res = await fetch(`${API}/alunos`);
+            const dados = await res.json();
+            document.getElementById('selectAlunos').innerHTML = dados.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
+            document.querySelector('#tabelaAlunos tbody').innerHTML = dados.map(a => `
+                <tr><td>${a.nome}</td><td><button class="btn-del" onclick="deletarGenerico('alunos', ${a.id})">Remover</button></td></tr>
+            `).join('');
+        }
+
+     async function listarCursos() {
+    try {
+        const res = await fetch(`${API}/cursos`);
+        const dados = await res.json();
+        
+        // Atualiza o Select de Matrículas
+        document.getElementById('selectCursos').innerHTML = dados.map(c => 
+            `<option value="${c.id}">${c.nome_curso}</option>`
+        ).join('');
+
+        // Atualiza a Tabela de Cursos (Corrigido c.id e c.nome_curso)
+        document.querySelector('#tabelaCursos tbody').innerHTML = dados.map(c => `
+            <tr>
+                <td>${c.nome_curso} (${c.carga_horaria}h)</td>
+                <td>
+                    <button class="btn-del" onclick="deletarGenerico('cursos', ${c.id})">Remover</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error("Erro ao listar cursos:", error);
+    }
+}
+
+        async function listarMatriculas() {
+            const res = await fetch(`${API}/matriculas`);
+            const dados = await res.json();
+            document.querySelector('#tabelaMatriculas tbody').innerHTML = dados.map(m => `
+                <tr>
+                    <td>${m.nome_aluno}</td>
+                    <td>${m.nome_curso}</td>
+                    <td class="status-${m.status}">${m.status.toUpperCase()}</td>
+                    <td>
+                        <button class="btn-action" onclick="mudarStatus(${m.id}, 'concluida')">Concluir</button>
+                        <button class="btn-del" onclick="mudarStatus(${m.id}, 'cancelada')">Cancelar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- AÇÕES ---
+        async function criarAluno() {
+            const nome = document.getElementById('nomeAluno').value;
+            const email = document.getElementById('emailAluno').value;
+            await fetch(`${API}/alunos`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nome, email })
+            });
+            atualizarTudo();
+        }
+
+        async function criarCurso() {
+            const nome_curso = document.getElementById('nomeCurso').value;
+            const carga_horaria = document.getElementById('cargaHoraria').value;
+            await fetch(`${API}/cursos`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nome_curso, carga_horaria })
+            });
+            atualizarTudo();
+        }
+
+        async function matricular() {
+            const aluno_id = document.getElementById('selectAlunos').value;
+            const curso_id = document.getElementById('selectCursos').value;
+            const res = await fetch(`${API}/matriculas`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ aluno_id, curso_id })
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                alert(err.erro);
+            }
+            atualizarTudo();
+        }
+
+        async function mudarStatus(id, status) {
+            await fetch(`${API}/matriculas/${id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ status })
+            });
+            atualizarTudo();
+        }
+
+        async function deletarGenerico(rota, id) {
+            if (confirm("Tem certeza?")) {
+                await fetch(`${API}/${rota}/${id}`, { method: 'DELETE' });
+                atualizarTudo();
+            }
+        }
+
+        window.onload = atualizarTudo;
+    </script>
+</body>
+</html>
