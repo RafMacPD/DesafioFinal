@@ -7,6 +7,10 @@
   },
   "servers": [
     {
+      "url": "https://desafiofinal-tanh.onrender.com",
+      "description": "Servidor de Produção (Render)"
+    },
+    {
       "url": "http://localhost:3000",
       "description": "Servidor Local"
     }
