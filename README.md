@@ -51,7 +51,7 @@ Para rodar com atualização automática (ambiente de desenvolvimento):
 
 ---
 
-## 🌐 Instruções de Deploy
+## Instruções de Deploy
 
 ### Informações de Publicação
 * **Plataforma de Hospedagem:** [Render]
@@ -71,7 +71,7 @@ Configure no seu serviço de hospedagem:
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## Tecnologias Utilizadas
 - **Node.js & Express**
 - **Knex.js & SQLite3**
 - **UUID v4** (Segurança interna)
