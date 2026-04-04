@@ -115,8 +115,7 @@
           "404": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
         }
       }
-    }
-  },
+    },
     "/cursos": {
       "get": {
         "tags": ["Cursos"],
@@ -239,3 +238,4 @@
       }
     }
   }
+}
