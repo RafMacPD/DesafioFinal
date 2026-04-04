@@ -23,6 +23,31 @@
           "error": { "type": "string" },
           "statusCode": { "type": "integer" }
         }
+      },
+      "Aluno": {
+        "type": "object",
+        "properties": {
+          "codigo_aluno": { "type": "integer" },
+          "nome": { "type": "string" },
+          "email": { "type": "string" }
+        }
+      },
+      "Curso": {
+        "type": "object",
+        "properties": {
+          "codigo_curso": { "type": "integer" },
+          "nome_curso": { "type": "string" },
+          "carga_horaria": { "type": "integer" }
+        }
+      },
+      "Matricula": {
+        "type": "object",
+        "properties": {
+          "codigo_matricula": { "type": "integer" },
+          "nome_aluno": { "type": "string" },
+          "nome_curso": { "type": "string" },
+          "status": { "type": "string" }
+        }
       }
     }
   },
@@ -32,39 +57,25 @@
         "tags": ["Alunos"],
         "summary": "Lista alunos (filtra por nome ou código amigável)",
         "parameters": [
-          {
-            "name": "nome",
-            "in": "query",
-            "description": "Parte do nome",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "codigo_aluno",
-            "in": "query",
-            "description": "Número da matrícula do aluno",
-            "schema": { "type": "integer" }
-          }
+          { "name": "nome", "in": "query", "schema": { "type": "string" } },
+          { "name": "codigo_aluno", "in": "query", "schema": { "type": "integer" } }
         ],
-        "responses": { "200": { "description": "Sucesso" } }
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Aluno" } } } }
+          }
+        }
       },
       "post": {
         "tags": ["Alunos"],
         "summary": "Cadastra um novo aluno",
         "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["nome", "email"],
-                "properties": {
-                  "nome": { "type": "string" },
-                  "email": { "type": "string" }
-                }
-              }
-            }
-          }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Aluno" } } }
         },
-        "responses": { "201": { "description": "Aluno criado" } }
+        "responses": {
+          "201": { "description": "Aluno criado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Aluno" } } } }
+        }
       }
     },
     "/alunos/{codigo}": {
@@ -72,14 +83,16 @@
         "tags": ["Alunos"],
         "summary": "Busca aluno pelo código amigável",
         "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Sucesso" } }
+        "responses": {
+          "200": { "description": "Sucesso", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Aluno" } } } }
+        }
       },
       "put": {
         "tags": ["Alunos"],
         "summary": "Atualiza aluno pelo código",
         "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "requestBody": {
-          "content": { "application/json": { "schema": { "type": "object", "properties": { "nome": { "type": "string" }, "email": { "type": "string" } } } } }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Aluno" } } }
         },
         "responses": { "200": { "description": "Atualizado" } }
       },
@@ -93,55 +106,36 @@
     "/cursos": {
       "get": {
         "tags": ["Cursos"],
-        "summary": "Lista cursos (filtra por nome ou código)",
-        "parameters": [
-          { "name": "nome", "in": "query", "schema": { "type": "string" } },
-          { "name": "codigo_curso", "in": "query", "schema": { "type": "integer" } }
-        ],
-        "responses": { "200": { "description": "Sucesso" } }
+        "summary": "Lista cursos",
+        "responses": {
+          "200": { "description": "Sucesso", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Curso" } } } } }
+        }
       },
       "post": {
         "tags": ["Cursos"],
         "summary": "Cria um curso",
         "requestBody": {
-          "content": { "application/json": { "schema": { "type": "object", "required": ["nome_curso"], "properties": { "nome_curso": { "type": "string" }, "carga_horaria": { "type": "integer" } } } } }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Curso" } } }
         },
         "responses": { "201": { "description": "Criado" } }
-      }
-    },
-    "/cursos/{codigo}": {
-      "put": {
-        "tags": ["Cursos"],
-        "summary": "Atualiza curso pelo código",
-        "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": {
-          "content": { "application/json": { "schema": { "type": "object", "properties": { "nome_curso": { "type": "string" }, "carga_horaria": { "type": "integer" } } } } }
-        },
-        "responses": { "200": { "description": "Atualizado" } }
-      },
-      "delete": {
-        "tags": ["Cursos"],
-        "summary": "Deleta curso pelo código",
-        "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "204": { "description": "Removido" } }
       }
     },
     "/matriculas": {
       "get": {
         "tags": ["Matrículas"],
-        "summary": "Lista todas as matrículas (Usa apenas códigos amigáveis)",
-        "parameters": [{ "name": "codigo_matricula", "in": "query", "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "Sucesso" } }
+        "summary": "Lista todas as matrículas",
+        "responses": {
+          "200": { "description": "Sucesso", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Matricula" } } } } }
+        }
       },
       "post": {
         "tags": ["Matrículas"],
-        "summary": "Matricular aluno usando códigos curtos",
+        "summary": "Matricular aluno",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["codigo_aluno", "codigo_curso"],
                 "properties": {
                   "codigo_aluno": { "type": "integer" },
                   "codigo_curso": { "type": "integer" }
@@ -151,17 +145,6 @@
           }
         },
         "responses": { "201": { "description": "Matriculado" } }
-      }
-    },
-    "/matriculas/{codigo}/status": {
-      "patch": {
-        "tags": ["Matrículas"],
-        "summary": "Alterar status pelo código da matrícula",
-        "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "requestBody": {
-          "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "enum": ["ativa", "cancelada", "concluida"] } } } } }
-        },
-        "responses": { "200": { "description": "Alterado" } }
       }
     }
   }
