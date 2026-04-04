@@ -1,27 +1,27 @@
 const express = require('express');
 const router = express.Router();
 const { knex } = require('../database/knex');
-const { v4: uuidv4 } = require('uuid'); // Adicionado para gerar o ID da matrícula
+const { v4: uuidv4 } = require('uuid');
 
-// Matricular um aluno em um curso
+// 1. Matricular um aluno usando códigos amigáveis (UUID oculto)
 router.post('/', async (req, res) => {
-  const { aluno_id, curso_id } = req.body;
+  const { codigo_aluno, codigo_curso } = req.body;
 
   try {
-    // 1. Validar se aluno e curso existem (IDs agora são strings/UUIDs)
-    const aluno = await knex('alunos').where({ id: aluno_id }).first();
-    const curso = await knex('cursos').where({ id: curso_id }).first();
+    // Busca UUIDs internamente para processar a regra de negócio
+    const aluno = await knex('alunos').where({ codigo_aluno }).select('id').first();
+    const curso = await knex('cursos').where({ codigo_curso }).select('id').first();
     
     if (!aluno || !curso) {
       return res.status(404).json({ 
-        error: "Aluno ou Curso inexistente no sistema", 
+        error: "Aluno ou Curso inexistente para os códigos fornecidos", 
         statusCode: 404 
       });
     }
 
-    // 2. Regra: Máximo de 5 matrículas ATIVAS por aluno
+    // Regra: Máximo de 5 matrículas ATIVAS
     const ativas = await knex('matriculas')
-      .where({ aluno_id, status: 'ativa' })
+      .where({ aluno_id: aluno.id, status: 'ativa' })
       .count('id as total')
       .first();
 
@@ -32,11 +32,18 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // 3. Efetivar matrícula com UUID manual
     const id = uuidv4();
-    await knex('matriculas').insert({ id, aluno_id, curso_id });
+    await knex('matriculas').insert({ 
+      id, 
+      aluno_id: aluno.id, 
+      curso_id: curso.id 
+    });
     
-    res.status(201).json({ id, mensagem: "Matrícula realizada com sucesso" });
+    // Retornamos apenas o que é seguro para o frontend
+    res.status(201).json({ 
+      mensagem: "Matrícula realizada com sucesso",
+      detalhes: { codigo_aluno, codigo_curso } 
+    });
 
   } catch (e) {
     res.status(400).json({ 
@@ -46,69 +53,72 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Listagem geral de matrículas
+// 2. Listagem geral (Removido UUID da matrícula e das FKs)
 router.get('/', async (req, res) => {
+  const { codigo_matricula } = req.query;
+
   try {
-    const lista = await knex('matriculas')
+    let query = knex('matriculas')
       .join('alunos', 'matriculas.aluno_id', 'alunos.id')
       .join('cursos', 'matriculas.curso_id', 'cursos.id')
       .select(
-        'matriculas.id',
+        'matriculas.codigo_matricula', 
         'alunos.nome as nome_aluno',
+        'alunos.codigo_aluno',
         'cursos.nome_curso',
+        'cursos.codigo_curso',
         'matriculas.status'
       );
+
+    if (codigo_matricula) {
+      query = query.where('matriculas.codigo_matricula', codigo_matricula);
+    }
+
+    const lista = await query;
     res.json(lista);
   } catch (error) {
     res.status(500).json({ error: "Erro ao listar matrículas", statusCode: 500 });
   }
 });
 
-// Listar cursos de um aluno específico
-router.get('/aluno/:id', async (req, res) => {
-  const lista = await knex('matriculas')
-    .join('cursos', 'matriculas.curso_id', 'cursos.id')
-    .where('matriculas.aluno_id', req.params.id)
-    .select('cursos.nome_curso', 'cursos.carga_horaria', 'matriculas.status');
-  res.json(lista);
+// 3. Listar cursos de um aluno (Busca interna por código amigável)
+router.get('/aluno/:codigo_aluno', async (req, res) => {
+  try {
+    const aluno = await knex('alunos').where({ codigo_aluno: req.params.codigo_aluno }).first();
+    if (!aluno) return res.status(404).json({ error: "Aluno não encontrado" });
+
+    const lista = await knex('matriculas')
+      .join('cursos', 'matriculas.curso_id', 'cursos.id')
+      .where('matriculas.aluno_id', aluno.id)
+      .select('cursos.nome_curso', 'cursos.codigo_curso', 'cursos.carga_horaria', 'matriculas.status');
+    
+    res.json(lista);
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao buscar cursos do aluno" });
+  }
 });
 
-// Listar alunos de um curso específico
-router.get('/curso/:id', async (req, res) => {
-  const lista = await knex('matriculas')
-    .join('alunos', 'matriculas.aluno_id', 'alunos.id')
-    .where('matriculas.curso_id', req.params.id)
-    .select('alunos.nome', 'alunos.email', 'matriculas.status');
-  res.json(lista);
-});
-
-// Alterar status da matrícula
-router.patch('/:id/status', async (req, res) => {
+// 4. Alterar status da matrícula (Usando o código amigável)
+router.patch('/:codigo/status', async (req, res) => {
   const { status } = req.body;
   const validos = ['ativa', 'cancelada', 'concluida'];
 
   if (!validos.includes(status)) {
-    return res.status(400).json({ 
-      error: "Status inválido. Use: ativa, cancelada ou concluida", 
-      statusCode: 400 
-    });
+    return res.status(400).json({ error: "Status inválido", statusCode: 400 });
   }
 
   try {
     const atualizado = await knex('matriculas')
-      .where({ id: req.params.id })
+      .where({ codigo_matricula: req.params.codigo })
       .update({ status });
 
     if (!atualizado) {
-      return res.status(404).json({ 
-        error: "Matrícula não encontrada", 
-        statusCode: 404 
-      });
+      return res.status(404).json({ error: "Matrícula não encontrada", statusCode: 404 });
     }
 
-    res.json({ mensagem: `Status da matrícula alterado para: ${status}` });
+    res.json({ mensagem: `Status alterado para: ${status}` });
   } catch (error) {
-    res.status(500).json({ error: "Erro ao atualizar status", statusCode: 500 });
+    res.status(500).json({ error: "Erro ao atualizar status" });
   }
 });
 

@@ -12,6 +12,7 @@ async function inicializarBanco() {
     if (!await knex.schema.hasTable('alunos')) {
       await knex.schema.createTable('alunos', t => {
         t.uuid('id').primary(); // Chave primária UUID
+        t.increments('codigo_aluno'); // Código de pesquisa do aluno
         t.string('nome').notNullable();
         t.string('email').unique().notNullable();
       });
@@ -22,6 +23,7 @@ async function inicializarBanco() {
     if (!await knex.schema.hasTable('cursos')) {
       await knex.schema.createTable('cursos', t => {
         t.uuid('id').primary(); // Chave primária UUID
+          t.increments('codigo_curso'); // Código de pesquisa do Curso
         t.string('nome_curso').unique().notNullable();
         t.integer('carga_horaria').notNullable();
       });
@@ -32,8 +34,7 @@ async function inicializarBanco() {
     if (!await knex.schema.hasTable('matriculas')) {
       await knex.schema.createTable('matriculas', t => {
         t.uuid('id').primary(); // Chave primária UUID
-        
-        // ALTERAÇÃO: aluno_id e curso_id agora são .uuid() para bater com as outras tabelas
+        t.increments('codigo_matricula'); // Código de pesquisa da matricula
         t.uuid('aluno_id').references('id').inTable('alunos').onDelete('CASCADE');
         t.uuid('curso_id').references('id').inTable('cursos').onDelete('CASCADE');
         

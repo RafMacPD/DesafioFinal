@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "API do Desafio Final de backend do PD Itabira (UUID)",
-    "description": "Gestão de Alunos, Cursos e Matrículas com UUID e SQLite.",
-    "version": "1.1.0"
+    "title": "API do Desafio Final de backend do PD Itabira (Protegida)",
+    "description": "Gestão de Alunos, Cursos e Matrículas usando Identificadores Amigáveis. UUIDs ocultos por segurança.",
+    "version": "1.2.0"
   },
   "servers": [
     {
@@ -26,19 +26,22 @@
     "/alunos": {
       "get": {
         "tags": ["Alunos"],
-        "summary": "Lista todos os alunos ou filtra por parte do nome",
+        "summary": "Lista alunos (filtra por nome ou código amigável)",
         "parameters": [
           {
             "name": "nome",
             "in": "query",
-            "description": "Parte do nome para filtrar",
-            "required": false,
+            "description": "Parte do nome",
             "schema": { "type": "string" }
+          },
+          {
+            "name": "codigo_aluno",
+            "in": "query",
+            "description": "Número da matrícula do aluno",
+            "schema": { "type": "integer" }
           }
         ],
-        "responses": {
-          "200": { "description": "Lista de alunos retornada com sucesso" }
-        }
+        "responses": { "200": { "description": "Sucesso" } }
       },
       "post": {
         "tags": ["Alunos"],
@@ -57,105 +60,56 @@
             }
           }
         },
-        "responses": {
-          "201": { "description": "Criado" },
-          "400": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
-        }
+        "responses": { "201": { "description": "Aluno criado" } }
       }
     },
-    "/alunos/{id}": {
+    "/alunos/{codigo}": {
       "get": {
         "tags": ["Alunos"],
-        "summary": "Busca um aluno específico pelo UUID",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "format": "uuid" }
-          }
-        ],
-        "responses": {
-          "200": { "description": "Aluno encontrado" },
-          "404": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
-        }
+        "summary": "Busca aluno pelo código amigável",
+        "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Sucesso" } }
       },
       "put": {
         "tags": ["Alunos"],
-        "summary": "Atualiza dados de um aluno",
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
-        ],
+        "summary": "Atualiza aluno pelo código",
+        "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "nome": { "type": "string" },
-                  "email": { "type": "string" }
-                }
-              }
-            }
-          }
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "nome": { "type": "string" }, "email": { "type": "string" } } } } }
         },
-        "responses": {
-          "200": { "description": "Atualizado" },
-          "404": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
-        }
+        "responses": { "200": { "description": "Atualizado" } }
       },
       "delete": {
         "tags": ["Alunos"],
-        "summary": "Remove um aluno",
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
-        ],
-        "responses": {
-          "204": { "description": "Removido" },
-          "404": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
-        }
+        "summary": "Remove aluno pelo código",
+        "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "204": { "description": "Removido" } }
       }
     },
     "/cursos": {
       "get": {
         "tags": ["Cursos"],
-        "summary": "Lista todos os cursos",
+        "summary": "Lista cursos (filtra por nome ou código)",
+        "parameters": [
+          { "name": "nome", "in": "query", "schema": { "type": "string" } },
+          { "name": "codigo_curso", "in": "query", "schema": { "type": "integer" } }
+        ],
         "responses": { "200": { "description": "Sucesso" } }
       },
       "post": {
         "tags": ["Cursos"],
         "summary": "Cria um curso",
         "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["nome_curso"],
-                "properties": {
-                  "nome_curso": { "type": "string" },
-                  "carga_horaria": { "type": "integer" }
-                }
-              }
-            }
-          }
+          "content": { "application/json": { "schema": { "type": "object", "required": ["nome_curso"], "properties": { "nome_curso": { "type": "string" }, "carga_horaria": { "type": "integer" } } } } }
         },
-        "responses": { "201": { "description": "Curso criado." } }
+        "responses": { "201": { "description": "Criado" } }
       }
     },
-    "/cursos/{id}": {
-      "get": {
-        "tags": ["Cursos"],
-        "summary": "Busca curso por ID",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
-        "responses": { 
-          "200": { "description": "Sucesso" },
-          "404": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
-        }
-      },
+    "/cursos/{codigo}": {
       "put": {
         "tags": ["Cursos"],
-        "summary": "Atualiza curso",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "summary": "Atualiza curso pelo código",
+        "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "requestBody": {
           "content": { "application/json": { "schema": { "type": "object", "properties": { "nome_curso": { "type": "string" }, "carga_horaria": { "type": "integer" } } } } }
         },
@@ -163,78 +117,47 @@
       },
       "delete": {
         "tags": ["Cursos"],
-        "summary": "Deleta curso",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
-        "responses": { "204": { "description": "Sem conteúdo" } }
+        "summary": "Deleta curso pelo código",
+        "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "204": { "description": "Removido" } }
       }
     },
     "/matriculas": {
       "get": {
         "tags": ["Matrículas"],
-        "summary": "Lista geral de matrículas (com nomes)",
+        "summary": "Lista todas as matrículas (Usa apenas códigos amigáveis)",
+        "parameters": [{ "name": "codigo_matricula", "in": "query", "schema": { "type": "integer" } }],
         "responses": { "200": { "description": "Sucesso" } }
       },
       "post": {
         "tags": ["Matrículas"],
-        "summary": "Matricular aluno",
+        "summary": "Matricular aluno usando códigos curtos",
         "requestBody": {
-          "content": { 
-            "application/json": { 
-              "schema": { 
-                "type": "object", 
-                "required": ["aluno_id", "curso_id"], 
-                "properties": { 
-                  "aluno_id": { "type": "string", "format": "uuid" }, 
-                  "curso_id": { "type": "string", "format": "uuid" } 
-                } 
-              } 
-            } 
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["codigo_aluno", "codigo_curso"],
+                "properties": {
+                  "codigo_aluno": { "type": "integer" },
+                  "codigo_curso": { "type": "integer" }
+                }
+              }
+            }
           }
         },
-        "responses": { 
-          "201": { "description": "Matriculado com sucesso." }, 
-          "400": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } },
-          "404": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
-        }
+        "responses": { "201": { "description": "Matriculado" } }
       }
     },
-    "/matriculas/aluno/{id}": {
-      "get": {
-        "tags": ["Matrículas"],
-        "summary": "Cursos de um aluno específico",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
-        "responses": { "200": { "description": "Sucesso" } }
-      }
-    },
-    "/matriculas/curso/{id}": {
-      "get": {
-        "tags": ["Matrículas"],
-        "summary": "Alunos de um curso específico",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
-        "responses": { "200": { "description": "Sucesso" } }
-      }
-    },
-    "/matriculas/{id}/status": {
+    "/matriculas/{codigo}/status": {
       "patch": {
         "tags": ["Matrículas"],
-        "summary": "Alterar status (Cancelar/Concluir)",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "summary": "Alterar status pelo código da matrícula",
+        "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
         "requestBody": {
-          "content": { 
-            "application/json": { 
-              "schema": { 
-                "type": "object", 
-                "properties": { 
-                  "status": { "type": "string", "enum": ["ativa", "cancelada", "concluida"] } 
-                } 
-              } 
-            } 
-          }
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "enum": ["ativa", "cancelada", "concluida"] } } } } }
         },
-        "responses": { 
-          "200": { "description": "Status alterado" },
-          "400": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
-        }
+        "responses": { "200": { "description": "Alterado" } }
       }
     }
   }

@@ -1,33 +1,38 @@
 const express = require('express');
 const router = express.Router();
 const { knex } = require('../database/knex');
-const { v4: uuidv4 } = require('uuid'); // Importação necessária para gerar o ID
+const { v4: uuidv4 } = require('uuid');
 
-// Listar todos os alunos ou filtrar por parte do nome
+// Listar todos os alunos ou filtrar por nome/codigo (UUID oculto)
 router.get('/', async (req, res) => {
-  const { nome } = req.query;
+  const { nome, codigo_aluno } = req.query;
 
   try {
-    let query = knex('alunos');
+    // Definimos explicitamente as colunas amigáveis
+    let query = knex('alunos').select('codigo_aluno', 'nome', 'email');
 
-    if (nome) {
-  
+    if (codigo_aluno) {
+      query = query.where({ codigo_aluno });
+    } else if (nome) {
       query = query.where('nome', 'like', `%${nome}%`);
     }
 
-    const alunos = await query.select('*');
+    const alunos = await query;
     res.json(alunos);
   } catch (error) {
     res.status(500).json({ error: "Erro ao buscar alunos", statusCode: 500 });
   }
 });
 
-// Buscar um aluno específico pelo ID (UUID)
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
+// Buscar um aluno específico pelo CÓDIGO amigável
+router.get('/:codigo', async (req, res) => {
+  const { codigo } = req.params;
 
   try {
-    const aluno = await knex('alunos').where({ id }).first();
+    const aluno = await knex('alunos')
+      .where({ codigo_aluno: codigo })
+      .select('codigo_aluno', 'nome', 'email') // Garante que o UUID não vaze
+      .first();
 
     if (!aluno) {
       return res.status(404).json({ error: "Aluno não encontrado", statusCode: 404 });
@@ -35,7 +40,7 @@ router.get('/:id', async (req, res) => {
 
     res.json(aluno);
   } catch (error) {
-    res.status(500).json({ error: "Erro ao buscar aluno por ID", statusCode: 500 });
+    res.status(500).json({ error: "Erro ao buscar aluno", statusCode: 500 });
   }
 });
 
@@ -44,78 +49,57 @@ router.post('/', async (req, res) => {
   const { nome, email } = req.body;
 
   if (!nome || !email || nome.trim() === "" || email.trim() === "") {
-    return res.status(400).json({ 
-      error: "Nome e Email são campos obrigatórios", 
-      statusCode: 400 
-    });
+    return res.status(400).json({ error: "Nome e Email são obrigatórios", statusCode: 400 });
   }
 
   try {
-    const id = uuidv4(); // Gerando o UUID manualmente antes do insert
+    const id = uuidv4();
+    // O banco gera o codigo_aluno (increment) sozinho
     await knex('alunos').insert({ id, nome, email });
     
-    res.status(201).json({ id, nome, email });
+    // Buscamos o código gerado para retornar ao usuário sem expor o UUID
+    const novoAluno = await knex('alunos').where({ id }).select('codigo_aluno', 'nome', 'email').first();
+    
+    res.status(201).json(novoAluno);
   } catch (err) {
-    res.status(400).json({ 
-      error: "Este e-mail já está cadastrado no sistema", 
-      statusCode: 400 
-    });
+    res.status(400).json({ error: "E-mail já cadastrado", statusCode: 400 });
   }
 });
 
-// Atualizar dados de um aluno existente
-router.put('/:id', async (req, res) => {
-  const { id } = req.params;
+// Atualizar dados usando o CÓDIGO
+router.put('/:codigo', async (req, res) => {
+  const { codigo } = req.params;
   const { nome, email } = req.body;
-
-  if (!nome || !email) {
-    return res.status(400).json({ 
-      error: "Dados incompletos para atualização", 
-      statusCode: 400 
-    });
-  }
 
   try {
     const atualizado = await knex('alunos')
-      .where({ id })
+      .where({ codigo_aluno: codigo })
       .update({ nome, email });
 
     if (!atualizado) {
-      return res.status(404).json({ 
-        error: "Aluno não encontrado", 
-        statusCode: 404 
-      });
+      return res.status(404).json({ error: "Aluno não encontrado", statusCode: 404 });
     }
 
     res.json({ mensagem: "Aluno atualizado com sucesso" });
   } catch (error) {
-    res.status(400).json({ 
-      error: "Erro ao atualizar. Verifique se o e-mail já pertence a outro aluno.", 
-      statusCode: 400 
-    });
+    res.status(400).json({ error: "Erro ao atualizar. Verifique os dados.", statusCode: 400 });
   }
 });
 
-// Remover um aluno
-router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
+// Remover aluno usando o CÓDIGO
+router.delete('/:codigo', async (req, res) => {
+  const { codigo } = req.params;
 
   try {
-    const deletado = await knex('alunos').where({ id }).delete();
+    const deletado = await knex('alunos').where({ codigo_aluno: codigo }).delete();
 
     if (!deletado) {
-      return res.status(404).json({ 
-        error: "Aluno não encontrado", 
-        statusCode: 404 
-      });
+      return res.status(404).json({ error: "Aluno não encontrado", statusCode: 404 });
     }
 
     res.status(204).send();
   } catch (error) {
-    res.status(500).json({ 
-      error: "Erro ao excluir aluno", 
-      statusCode: 500 
-    });
+    res.status(500).json({ error: "Erro ao excluir aluno", statusCode: 500 });
   }
 });
 
