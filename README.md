@@ -12,9 +12,9 @@ API REST desenvolvida para o desafio final de backend do **Projeto Desenvolve It
 
 ### 2. Instalação
 Abra o terminal na pasta do projeto e execute:
-    git clone https://github.com/RafMacPD/DesafioFinal
-    cd seu-repositorio
-    npm install
+    *git clone https://github.com/RafMacPD/DesafioFinal
+    *cd seu-repositorio
+    *npm install
 
 ### 3. Configuração do Banco de Dados
     O projeto utiliza **SQLite3** via **Knex.js**. 
@@ -31,20 +31,20 @@ Para rodar com atualização automática (ambiente de desenvolvimento):
 
 ### 5. Lista de Endpoints
 
-### 👥 Alunos
+### Alunos
 - **GET** `/alunos` : Lista todos ou filtra por `nome` ou `codigo_aluno`.
 - **POST** `/alunos` : Cadastra novo aluno (corpo: `nome`, `email`).
 - **GET** `/alunos/{codigo}` : Busca detalhes pelo código amigável.
 - **PUT** `/alunos/{codigo}` : Atualiza dados do aluno pelo código.
 - **DELETE** `/alunos/{codigo}` : Remove aluno do sistema pelo código.
 
-### 📖 Cursos
+### Cursos
 - **GET** `/cursos` : Lista todos ou filtra por `nome` ou `codigo_curso`.
 - **POST** `/cursos` : Cria um curso (corpo: `nome_curso`, `carga_horaria`).
 - **PUT** `/cursos/{codigo}` : Atualiza curso pelo código.
 - **DELETE** `/cursos/{codigo}` : Remove curso pelo código.
 
-### 📝 Matrículas
+###  Matrículas
 - **POST** `/matriculas` : Matrícula usando `codigo_aluno` e `codigo_curso`.
 - **GET** `/matriculas` : Lista todas (exibe nomes de alunos e cursos).
 - **PATCH** `/matriculas/{codigo}/status` : Altera status (`ativa`, `cancelada`, `concluida`).
