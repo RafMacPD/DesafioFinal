@@ -24,9 +24,13 @@ Abra o terminal na pasta do projeto e execute:
 
 ### 4. Execução
 Para rodar com atualização automática (ambiente de desenvolvimento):
+    
     ```bash
+    
     npm run dev
+    
     * O servidor iniciará em: http://localhost:3000
+    
     * A documentação Swagger estará em: http://localhost:3000/docs
 
 ### 5. Lista de Endpoints
