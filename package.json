@@ -1,0 +1,32 @@
+{
+  "name": "sistema-escolar-api",
+  "version": "1.0.0",
+  "description": "API REST para o desafio final de backend do Projeto Desenvolve Itabira",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon --watch src/server.js"
+  },
+  "keywords": [
+    "node",
+    "express",
+    "sqlite3",
+    "knex",
+    "api",
+    "uuid",
+    "swagger"
+  ],
+  "author": "Seu Nome",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "knex": "^3.1.0",
+    "sqlite3": "^6.0.1",
+    "swagger-ui-express": "^5.0.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

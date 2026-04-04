@@ -1,0 +1,241 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API do Desafio Final de backend do PD Itabira (UUID)",
+    "description": "Gestão de Alunos, Cursos e Matrículas com UUID e SQLite.",
+    "version": "1.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor Local"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "ErroPadrao": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" },
+          "statusCode": { "type": "integer" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/alunos": {
+      "get": {
+        "tags": ["Alunos"],
+        "summary": "Lista todos os alunos ou filtra por parte do nome",
+        "parameters": [
+          {
+            "name": "nome",
+            "in": "query",
+            "description": "Parte do nome para filtrar",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Lista de alunos retornada com sucesso" }
+        }
+      },
+      "post": {
+        "tags": ["Alunos"],
+        "summary": "Cadastra um novo aluno",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nome", "email"],
+                "properties": {
+                  "nome": { "type": "string" },
+                  "email": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Criado" },
+          "400": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
+        }
+      }
+    },
+    "/alunos/{id}": {
+      "get": {
+        "tags": ["Alunos"],
+        "summary": "Busca um aluno específico pelo UUID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Aluno encontrado" },
+          "404": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
+        }
+      },
+      "put": {
+        "tags": ["Alunos"],
+        "summary": "Atualiza dados de um aluno",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nome": { "type": "string" },
+                  "email": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Atualizado" },
+          "404": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
+        }
+      },
+      "delete": {
+        "tags": ["Alunos"],
+        "summary": "Remove um aluno",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "204": { "description": "Removido" },
+          "404": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
+        }
+      }
+    }
+  },
+    "/cursos": {
+      "get": {
+        "tags": ["Cursos"],
+        "summary": "Lista todos os cursos",
+        "responses": { "200": { "description": "Sucesso" } }
+      },
+      "post": {
+        "tags": ["Cursos"],
+        "summary": "Cria um curso",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nome_curso"],
+                "properties": {
+                  "nome_curso": { "type": "string" },
+                  "carga_horaria": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Curso criado." } }
+      }
+    },
+    "/cursos/{id}": {
+      "get": {
+        "tags": ["Cursos"],
+        "summary": "Busca curso por ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { 
+          "200": { "description": "Sucesso" },
+          "404": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
+        }
+      },
+      "put": {
+        "tags": ["Cursos"],
+        "summary": "Atualiza curso",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "nome_curso": { "type": "string" }, "carga_horaria": { "type": "integer" } } } } }
+        },
+        "responses": { "200": { "description": "Atualizado" } }
+      },
+      "delete": {
+        "tags": ["Cursos"],
+        "summary": "Deleta curso",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "204": { "description": "Sem conteúdo" } }
+      }
+    },
+    "/matriculas": {
+      "get": {
+        "tags": ["Matrículas"],
+        "summary": "Lista geral de matrículas (com nomes)",
+        "responses": { "200": { "description": "Sucesso" } }
+      },
+      "post": {
+        "tags": ["Matrículas"],
+        "summary": "Matricular aluno",
+        "requestBody": {
+          "content": { 
+            "application/json": { 
+              "schema": { 
+                "type": "object", 
+                "required": ["aluno_id", "curso_id"], 
+                "properties": { 
+                  "aluno_id": { "type": "string", "format": "uuid" }, 
+                  "curso_id": { "type": "string", "format": "uuid" } 
+                } 
+              } 
+            } 
+          }
+        },
+        "responses": { 
+          "201": { "description": "Matriculado com sucesso." }, 
+          "400": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } },
+          "404": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
+        }
+      }
+    },
+    "/matriculas/aluno/{id}": {
+      "get": {
+        "tags": ["Matrículas"],
+        "summary": "Cursos de um aluno específico",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "Sucesso" } }
+      }
+    },
+    "/matriculas/curso/{id}": {
+      "get": {
+        "tags": ["Matrículas"],
+        "summary": "Alunos de um curso específico",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "Sucesso" } }
+      }
+    },
+    "/matriculas/{id}/status": {
+      "patch": {
+        "tags": ["Matrículas"],
+        "summary": "Alterar status (Cancelar/Concluir)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": {
+          "content": { 
+            "application/json": { 
+              "schema": { 
+                "type": "object", 
+                "properties": { 
+                  "status": { "type": "string", "enum": ["ativa", "cancelada", "concluida"] } 
+                } 
+              } 
+            } 
+          }
+        },
+        "responses": { 
+          "200": { "description": "Status alterado" },
+          "400": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErroPadrao" } } } }
+        }
+      }
+    }
+  }
