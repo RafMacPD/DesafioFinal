@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "API do Desafio Final de backend do PD Itabira (Protegida)",
-    "description": "Gestão de Alunos, Cursos e Matrículas usando Identificadores Amigáveis. UUIDs ocultos por segurança.",
-    "version": "1.2.0"
+    "title": "API do Desafio Final de backend do PD Itabira (Híbrida)",
+    "description": "Gestão de Alunos, Cursos e Matrículas. Identificação flexível e controle de status.",
+    "version": "1.4.0"
   },
   "servers": [
     {
@@ -32,6 +32,14 @@
           "email": { "type": "string" }
         }
       },
+      "AlunoInput": {
+        "type": "object",
+        "required": ["nome", "email"],
+        "properties": {
+          "nome": { "type": "string", "example": "João Silva" },
+          "email": { "type": "string", "example": "joao@email.com" }
+        }
+      },
       "Curso": {
         "type": "object",
         "properties": {
@@ -40,12 +48,22 @@
           "carga_horaria": { "type": "integer" }
         }
       },
+      "CursoInput": {
+        "type": "object",
+        "required": ["nome_curso"],
+        "properties": {
+          "nome_curso": { "type": "string", "example": "Backend Node.js" },
+          "carga_horaria": { "type": "integer", "example": 40 }
+        }
+      },
       "Matricula": {
         "type": "object",
         "properties": {
           "codigo_matricula": { "type": "integer" },
           "nome_aluno": { "type": "string" },
+          "codigo_aluno": { "type": "integer" },
           "nome_curso": { "type": "string" },
+          "codigo_curso": { "type": "integer" },
           "status": { "type": "string" }
         }
       }
@@ -55,11 +73,7 @@
     "/alunos": {
       "get": {
         "tags": ["Alunos"],
-        "summary": "Lista alunos (filtra por nome ou código amigável)",
-        "parameters": [
-          { "name": "nome", "in": "query", "schema": { "type": "string" } },
-          { "name": "codigo_aluno", "in": "query", "schema": { "type": "integer" } }
-        ],
+        "summary": "Lista todos os alunos",
         "responses": {
           "200": {
             "description": "Sucesso",
@@ -71,51 +85,68 @@
         "tags": ["Alunos"],
         "summary": "Cadastra um novo aluno",
         "requestBody": {
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Aluno" } } }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AlunoInput" } } }
         },
         "responses": {
-          "201": { "description": "Aluno criado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Aluno" } } } }
+          "201": { 
+            "description": "Criado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Aluno" } } } 
+          }
         }
       }
     },
-    "/alunos/{codigo}": {
-      "get": {
-        "tags": ["Alunos"],
-        "summary": "Busca aluno pelo código amigável",
-        "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": {
-          "200": { "description": "Sucesso", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Aluno" } } } }
-        }
-      },
+    "/alunos/{identificador}": {
       "put": {
         "tags": ["Alunos"],
-        "summary": "Atualiza aluno pelo código",
-        "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "summary": "Atualiza aluno (Identifica por Código, Nome ou E-mail)",
+        "parameters": [
+          { "name": "identificador", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
         "requestBody": {
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Aluno" } } }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AlunoInput" } } }
         },
-        "responses": { "200": { "description": "Atualizado" } }
+        "responses": { "200": { "description": "Atualizado com sucesso" } }
       },
       "delete": {
         "tags": ["Alunos"],
-        "summary": "Remove aluno pelo código",
-        "parameters": [{ "name": "codigo", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "204": { "description": "Removido" } }
+        "summary": "Remove aluno e mostra quem foi deletado",
+        "parameters": [
+          { "name": "identificador", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { 
+          "200": { 
+            "description": "Aluno removido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensagem": { "type": "string" },
+                    "alunoRemovido": { "$ref": "#/components/schemas/Aluno" }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/cursos": {
       "get": {
         "tags": ["Cursos"],
-        "summary": "Lista cursos",
+        "summary": "Lista todos os cursos",
         "responses": {
-          "200": { "description": "Sucesso", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Curso" } } } } }
+          "200": {
+            "description": "Sucesso",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Curso" } } } }
+          }
         }
       },
       "post": {
         "tags": ["Cursos"],
-        "summary": "Cria um curso",
+        "summary": "Cria um novo curso",
         "requestBody": {
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Curso" } } }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CursoInput" } } }
         },
         "responses": { "201": { "description": "Criado" } }
       }
@@ -123,14 +154,17 @@
     "/matriculas": {
       "get": {
         "tags": ["Matrículas"],
-        "summary": "Lista todas as matrículas",
+        "summary": "Lista todas as matrículas realizadas",
         "responses": {
-          "200": { "description": "Sucesso", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Matricula" } } } } }
+          "200": {
+            "description": "Sucesso",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Matricula" } } } }
+          }
         }
       },
       "post": {
         "tags": ["Matrículas"],
-        "summary": "Matricular aluno",
+        "summary": "Matricular um aluno",
         "requestBody": {
           "content": {
             "application/json": {
@@ -144,7 +178,46 @@
             }
           }
         },
-        "responses": { "201": { "description": "Matriculado" } }
+        "responses": { "201": { "description": "Matrícula realizada" } }
+      }
+    },
+    "/matriculas/aluno/{codigo_aluno}": {
+      "get": {
+        "tags": ["Matrículas"],
+        "summary": "Listar cursos de um aluno específico",
+        "parameters": [
+          { "name": "codigo_aluno", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de cursos do aluno",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Curso" } } } }
+          }
+        }
+      }
+    },
+    "/matriculas/{codigo}/status": {
+      "patch": {
+        "tags": ["Matrículas"],
+        "summary": "Alterar status da matrícula",
+        "parameters": [
+          { "name": "codigo", "in": "path", "required": true, "description": "Código da matrícula", "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string", "enum": ["ativa", "cancelada", "concluida", "suspensa"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Status atualizado com sucesso" }
+        }
       }
     }
   }
