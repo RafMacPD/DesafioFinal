@@ -5,12 +5,12 @@ const { v4: uuidv4 } = require('uuid');
 
 // 1. Matricular um aluno usando códigos amigáveis (UUID oculto)
 router.post('/', async (req, res) => {
-  const { codigo_aluno, codigo_curso } = req.body;
-
+  const codigo_aluno = Number(req.body.codigo_aluno);
+  const codigo_curso = Number(req.body.codigo_curso);
   try {
     // Busca UUIDs internamente para processar a regra de negócio
-    const aluno = await knex('alunos').where({ codigo_aluno }).select('id').first();
-    const curso = await knex('cursos').where({ codigo_curso }).select('id').first();
+    const aluno = await knex('alunos').where({codigo_aluno}).select('id').first();
+    const curso = await knex('cursos').where({codigo_curso}).select('id').first();
     
     if (!aluno || !curso) {
       return res.status(404).json({ 
@@ -39,7 +39,6 @@ router.post('/', async (req, res) => {
       curso_id: curso.id 
     });
     
-    // Retornamos apenas o que é seguro para o frontend
     res.status(201).json({ 
       mensagem: "Matrícula realizada com sucesso",
       detalhes: { codigo_aluno, codigo_curso } 
@@ -53,7 +52,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// 2. Listagem geral (Removido UUID da matrícula e das FKs)
+// 2. Listagem geral
 router.get('/', async (req, res) => {
   const { codigo_matricula } = req.query;
 
@@ -81,7 +80,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 3. Listar cursos de um aluno (Busca interna por código amigável)
+// 3. Listar cursos de um aluno
 router.get('/aluno/:codigo_aluno', async (req, res) => {
   try {
     const aluno = await knex('alunos').where({ codigo_aluno: req.params.codigo_aluno }).first();
@@ -98,10 +97,10 @@ router.get('/aluno/:codigo_aluno', async (req, res) => {
   }
 });
 
-// 4. Alterar status da matrícula (Usando o código amigável)
+// 4. Alterar status da matrícula
 router.patch('/:codigo/status', async (req, res) => {
   const { status } = req.body;
-  const validos = ['ativa', 'cancelada', 'concluida'];
+  const validos = ['ativa', 'cancelada', 'concluida', 'suspensa'];
 
   if (!validos.includes(status)) {
     return res.status(400).json({ error: "Status inválido", statusCode: 400 });
